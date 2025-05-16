@@ -1,1 +1,1 @@
-Windows: Autohotkey: https://www.autohotkey.com/download/
+Windows: AutoHotkey: https://www.autohotkey.com/download/
