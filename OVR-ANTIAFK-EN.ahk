@@ -1,4 +1,4 @@
-﻿#Requires AutoHotkey v2.0.19
+#Requires AutoHotkey v2.0.19
 #SingleInstance Force
 
 global isRunning := false
