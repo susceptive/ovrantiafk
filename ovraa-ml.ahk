@@ -28,7 +28,7 @@ translations := Map(
         "key", "Gönderilecek Tuş:",
         "start", "Başlat",
         "stop", "Durdur",
-        "logs", "Loglar:",
+        "logs", "Kayıtlar:",
         "status", "Durum:",
         "started", "✅ Bot başlatıldı (her {1} ms).",
         "stopped", "⏹️ Bot durduruldu.",
