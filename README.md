@@ -13,11 +13,11 @@
 
 ### ❓ [TR] Sık Sorulan Sorular | [EN] Frequently Asked Questions
 
-### [TR] Tuş kombinasyonlarını neden desteklemiyor? (Örneğin: `Shift + F1`)  
+### Tuş kombinasyonlarını neden desteklemiyor? (Örneğin: `Shift + F1`)  
 Bu, Windows'un girdi yönetimiyle ilgilidir. Script, oyun arkaplanda olsa bile komut gönderebilir. Ancak tuş kombinasyonlarını destekleyen bir sürüm için oyun penceresinin öne getirilmesi gerekir. Bu da istenmeyen bir durumdur.  
 Yine de, kombinasyon tuşlarını destekleyen bir sürüm isterseniz benimle iletişime geçebilirsiniz.
 
-### [EN] Why doesn't it support key combinations? (e.g., `Shift + F1`)  
+### Why doesn't it support key combinations? (e.g., `Shift + F1`)  
 This is related to how Windows handles input. The script can send keys even when the game is in the background. However, supporting key combinations would require bringing the game window to the foreground, which is not desirable in this context.  
 Still, if you'd like a version that supports combinations, feel free to contact me.
 
