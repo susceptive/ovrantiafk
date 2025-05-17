@@ -3,7 +3,7 @@
 
 global isRunning := false
 global interval := 5000
-global lang := "en"
+global cleanKeyToSend := ""
 
 translations := Map(
     "en", Map(
@@ -17,6 +17,7 @@ translations := Map(
         "started", "✅ Bot started (every {1} ms).",
         "stopped", "⏹️ Bot stopped.",
         "invalidInterval", "⚠️ Invalid interval, must be at least 100 ms.",
+        "notNumber", "⚠️ Interval must contain only numbers!",
         "notFound", "❌ ODIN window not found.",
         "sent", "📨 Key '{1}' sent.",
         "active", "🟢 Active",
@@ -33,12 +34,14 @@ translations := Map(
         "started", "✅ Bot başlatıldı (her {1} ms).",
         "stopped", "⏹️ Bot durduruldu.",
         "invalidInterval", "⚠️ Geçersiz aralık, en az 100 ms olmalı.",
+        "notNumber", "⚠️ Süre sadece rakam içermelidir!",
         "notFound", "❌ ODIN penceresi bulunamadı.",
         "sent", "📨 '{1}' tuşu gönderildi.",
         "active", "🟢 Aktif",
         "inactive", "🔴 Pasif"
     )
 )
+global lang := "en"
 
 T(key, args*) {
     global lang, translations
@@ -49,12 +52,9 @@ T(key, args*) {
 }
 
 SendKeyToODIN() {
-    global isRunning, keyInput, logBox
+    global isRunning, cleanKeyToSend, logBox
     if !isRunning
         return
-
-    keyToSend := keyInput.Value
-    keyToSend := StrLower(keyToSend)
 
     hwnd := WinExist("ahk_exe ProjectLH.exe")
     if !hwnd {
@@ -62,16 +62,17 @@ SendKeyToODIN() {
         return
     }
 
-    ControlSend(keyToSend, , "ahk_exe ProjectLH.exe")
-    AddLog(T("sent", keyToSend))
+    ControlSend(cleanKeyToSend, , "ahk_exe ProjectLH.exe")
+    AddLog(T("sent", cleanKeyToSend))
 }
 
 AddLog(text) {
     global logBox
+    if !IsObject(logBox)
+        return
     tStamp := FormatTime(, "HH:mm:ss")
     prevLog := logBox.Text
-    newLog := tStamp " - " text "`r`n" prevLog
-    logBox.Text := newLog
+    logBox.Text := tStamp " - " text "`r`n" prevLog
 }
 
 ShowNotification(title, message) {
@@ -84,19 +85,35 @@ UpdateStatusIcon() {
 }
 
 StartBot(*) {
-    global isRunning, interval, intervalInput
+    global isRunning, intervalInput, keyInput, cleanKeyToSend
 
     intervalRaw := intervalInput.Value
-    interval := StrReplace(intervalRaw, " ")
-    interval := interval + 0
+    intervalRaw := StrReplace(intervalRaw, " ")
 
-    if (interval < 100) {
-        AddLog(T("invalidInterval"))
+    if !RegExMatch(intervalRaw, "^\d+$") {
+        AddLog(T("notNumber"))
+        ShowNotification("OVR Anti-AFK", T("notNumber"))
         return
     }
 
-    SetTimer(SendKeyToODIN, 0) ; Timerı sıfırla/durdur
-    SetTimer(SendKeyToODIN, interval) ; Timerı yeniden başlat
+    interval := intervalRaw + 0
+
+    if (interval < 100) {
+        AddLog(T("invalidInterval"))
+        ShowNotification("OVR Anti-AFK", T("invalidInterval"))
+        return
+    }
+
+    cleanKeyToSend := keyInput.Value
+    cleanKeyToSend := RegExReplace(cleanKeyToSend, "^[\+\^\#\!]+")
+    if RegExMatch(cleanKeyToSend, "^[A-Za-z]$")
+        cleanKeyToSend := StrLower(cleanKeyToSend)
+
+    SetTimer(SendKeyToODIN, 0)
+    SetTimer(SendKeyToODIN, interval)
+
+    intervalInput.Enabled := false
+    keyInput.Enabled := false
 
     isRunning := true
     UpdateStatusIcon()
@@ -108,9 +125,40 @@ StopBot(*) {
     global isRunning
     SetTimer(SendKeyToODIN, 0)
     isRunning := false
+
+    intervalInput.Enabled := true
+    keyInput.Enabled := true
+
     UpdateStatusIcon()
     AddLog(T("stopped"))
     ShowNotification("OVR Anti-AFK", T("stopped"))
+}
+
+IntervalChanged(*) {
+    global isRunning, intervalInput
+
+    static warned := false
+
+    newVal := intervalInput.Value
+    filtered := ""
+
+    for ch in StrSplit(newVal)
+        if ch ~= "\d"
+            filtered .= ch
+
+    if (filtered != newVal) {
+        intervalInput.Value := filtered
+        if !warned {
+            AddLog(T("notNumber"))
+            ShowNotification("OVR Anti-AFK", T("notNumber"))
+            warned := true
+        }
+    } else {
+        warned := false
+    }
+
+    if isRunning
+        StopBot()
 }
 
 SwitchLanguage(ctrl, info) {
@@ -132,13 +180,15 @@ UpdateGuiText() {
     UpdateStatusIcon()
 }
 
-; GUI Oluşturma
+; GUI oluşturma
 myGui := Gui("+AlwaysOnTop", T("title"))
+
 intervalLabel := myGui.Add("Text", , T("interval"))
 intervalInput := myGui.Add("Edit", "vIntervalInput w150", interval)
+intervalInput.OnEvent("Change", IntervalChanged)
 
 keyLabel := myGui.Add("Text", "w150", T("key"))
-keyInput := myGui.Add("Edit", "vKeyInput w150", "T")
+keyInput := myGui.Add("Hotkey", "vKeyInput w150", "t")
 
 startBtn := myGui.Add("Button", "w100", T("start"))
 stopBtn := myGui.Add("Button", "w100", T("stop"))
@@ -157,7 +207,6 @@ langDrop.Value := 1
 startBtn.OnEvent("Click", StartBot)
 stopBtn.OnEvent("Click", StopBot)
 
-; Pencere kapatılırsa bot da dursun
 myGui.OnEvent("Close", (*) => StopBot())
 
 UpdateStatusIcon()
