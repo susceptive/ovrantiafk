@@ -49,12 +49,12 @@ T(key, args*) {
 }
 
 SendKeyToODIN() {
-    global myGui, logBox, isRunning
+    global isRunning, keyInput, logBox
     if !isRunning
         return
 
-    keyToSend := myGui["KeyInput"].Value
-    keyToSend := StrLower(keyToSend)  ; Küçük harfe çeviriyoruz
+    keyToSend := keyInput.Value
+    keyToSend := StrLower(keyToSend)
 
     hwnd := WinExist("ahk_exe ProjectLH.exe")
     if !hwnd {
@@ -95,8 +95,8 @@ StartBot(*) {
         return
     }
 
-    SetTimer(SendKeyToODIN, 0)
-    SetTimer(SendKeyToODIN, interval)
+    SetTimer(SendKeyToODIN, 0) ; Timerı sıfırla/durdur
+    SetTimer(SendKeyToODIN, interval) ; Timerı yeniden başlat
 
     isRunning := true
     UpdateStatusIcon()
@@ -156,6 +156,9 @@ langDrop.Value := 1
 
 startBtn.OnEvent("Click", StartBot)
 stopBtn.OnEvent("Click", StopBot)
+
+; Pencere kapatılırsa bot da dursun
+myGui.OnEvent("Close", (*) => StopBot())
 
 UpdateStatusIcon()
 myGui.Show()
